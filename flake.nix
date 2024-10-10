@@ -50,7 +50,7 @@
             };
           };
 
-          # This ensures that we are explicitly building the shared object file.
+          # Build the binary
           cargoBuildOptions = [ "--release" "--lib" "--features" "fuzzy" ];
 
           installPhase = ''
@@ -67,19 +67,20 @@
 
           buildInputs = [ blink-fuzzy-lib ];
 
+          # Prevent the plugin from attempting to download the prebuilt binary
           postInstall = ''
-            # Make sure the library is available in the output
             mkdir -p $out/lib
             cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $out/lib/
+
+            # Disable pre-built binary download by setting this environment variable
+            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
+
+            # Tell the plugin to force using this version of the binary
+            echo "set fuzzy.prebuiltBinaries.forceVersion=true" >> $out/plugin/blink-cmp.vim
+            echo "let g:fuzzy_prebuilt_binary_path='$out/lib/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
           '';
 
           vimFiles.plugin = "plugin/blink-cmp.vim";
-
-          # Make sure the plugin knows where to find the library
-          # This depends on how blink.cmp is configured. Adjust as necessary:
-          preInstall = ''
-            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
-          '';
 
           meta = {
             description = "Performant, batteries-included completion plugin for Neovim";
@@ -104,4 +105,3 @@
     };
   };
 }
-
