@@ -52,61 +52,38 @@
 
           cargoBuildOptions = [ "--release" "--lib" "--features" "fuzzy" ];
 
-          installPhase = ''
-            # Copy the built library to the output path
-            mkdir -p $out/lib
-            cp target/release/libblink_cmp_fuzzy.so $out/lib/
-          '';
         };
 
       in {
-        blink-cmp = pkgs.vimUtils.buildVimPlugin {
-          pname = "blink-cmp";
-          inherit src version;
+	blink-cmp = pkgs.vimUtils.buildVimPlugin {
+            pname = "blink-cmp";
+            inherit src version;
+            preInstall = ''
+              mkdir -p target/release
+              ln -s ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so target/release/libblink_cmp_fuzzy.so
+            '';
 
-          buildInputs = [ blink-fuzzy-lib ];
-
-          # Ensure the plugin uses the locally built library
-          postInstall = ''
-            # Copy the built .so file to Neovim's runtime path
-            localLibDir=$out/lib
-            mkdir -p $localLibDir
-            cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $localLibDir/
-
-            # Write Neovim configuration to use the local .so file
-            echo "let g:fuzzy_prebuilt_binary_path='$localLibDir/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
-            echo "let g:fuzzy_library_path='$localLibDir'" >> $out/plugin/blink-cmp.vim
-          '';
-
-          vimFiles.plugin = "plugin/blink-cmp.vim";
-
-          meta = {
-            description = "Performant, batteries-included completion plugin for Neovim";
-            homepage = "https://github.com/saghen/blink.cmp";
-            license = lib.licenses.mit;
-            maintainers = with lib.maintainers; [ redxtech ];
+            meta = {
+              description =
+                "Performant, batteries-included completion plugin for Neovim ";
+              homepage = "https://github.com/saghen/blink.cmp";
+              license = lib.licenses.mit;
+              maintainers = with lib.maintainers; [ redxtech ];
+            };
           };
+
+          default = self'.packages.blink-cmp;
         };
 
-        default = self'.packages.blink-cmp;
-      };
+        # define the default dev environment
+        devenv.shells.default = {
+          name = "blink";
 
-      # define the default dev environment
-      devenv.shells.default = {
-        name = "blink";
-
-        # Set environment to use the locally built .so file during runtime
-        environment = {
-          LD_LIBRARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH";
-          FUZZY_PREBUILT_BINARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so";
-        };
-
-        languages.rust = {
-          enable = true;
-          channel = "nightly";
+          languages.rust = {
+            enable = true;
+            channel = "nightly";
+          };
         };
       };
     };
-  };
 }
-
