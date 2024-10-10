@@ -49,39 +49,17 @@
               "frizbee-0.1.0" = "sha256-9L3ZS7GMvLEqOBjC/VW2jHEZge/s6jRN7ok647Frl/M=";
             };
           };
-
-          # Build the binary
-          cargoBuildOptions = [ "--release" "--lib" "--features" "fuzzy" ];
-
-          installPhase = ''
-            # Copy the built library to the output path
-            mkdir -p $out/lib
-            cp target/release/libblink_cmp_fuzzy.so $out/lib/
-          '';
         };
-
       in {
         blink-cmp = pkgs.vimUtils.buildVimPlugin {
           pname = "blink-cmp";
           inherit src version;
-
+          # Ensure the Rust library is available during the plugin build
           buildInputs = [ blink-fuzzy-lib ];
 
-          # Ensure the plugin uses the locally built library
           postInstall = ''
-            # Copy the built .so file
             mkdir -p $out/lib
             cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $out/lib/
-
-            # Configure Neovim to use the local .so file
-            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
-            export LD_LIBRARY_PATH=${blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH
-
-            # Set Vim plugin environment, ensuring it uses the local .so file
-            echo "let g:fuzzy_force_local = 1" >> $out/plugin/blink-cmp.vim
-            echo "let g:fuzzy_prebuilt_binary_path='$out/lib/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
-            echo "let g:fuzzy_library_path='$LD_LIBRARY_PATH'" >> $out/plugin/blink-cmp.vim
-            echo "let g:fuzzy_prebuilt_binaries_force_version='true'" >> $out/plugin/blink-cmp.vim
           '';
 
           vimFiles.plugin = "plugin/blink-cmp.vim";
@@ -100,12 +78,6 @@
       # define the default dev environment
       devenv.shells.default = {
         name = "blink";
-
-        # Set environment to use the locally built .so file during runtime
-        environment = {
-          LD_LIBRARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH";
-          FUZZY_PREBUILT_BINARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so";
-        };
 
         languages.rust = {
           enable = true;
