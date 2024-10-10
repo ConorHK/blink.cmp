@@ -50,7 +50,6 @@
             };
           };
 
-          # This ensures that we are explicitly building the shared object file.
           cargoBuildOptions = [ "--release" "--lib" "--features" "fuzzy" ];
 
           installPhase = ''
@@ -67,19 +66,23 @@
 
           buildInputs = [ blink-fuzzy-lib ];
 
+          # Ensure the plugin uses the locally built library
           postInstall = ''
-            # Make sure the library is available in the output
+            # Copy the built .so file
             mkdir -p $out/lib
             cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $out/lib/
+
+            # Configure Neovim to use the local .so file
+            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
+            export LD_LIBRARY_PATH=${blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH
+
+            # Set Vim plugin environment, ensuring it uses the local .so file
+            echo "let g:fuzzy_force_local = 1" >> $out/plugin/blink-cmp.vim
+            echo "let g:fuzzy_prebuilt_binary_path='$out/lib/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
+            echo "let g:fuzzy_library_path='$LD_LIBRARY_PATH'" >> $out/plugin/blink-cmp.vim
           '';
 
           vimFiles.plugin = "plugin/blink-cmp.vim";
-
-          # Make sure the plugin knows where to find the library
-          # This depends on how blink.cmp is configured. Adjust as necessary:
-          preInstall = ''
-            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
-          '';
 
           meta = {
             description = "Performant, batteries-included completion plugin for Neovim";
@@ -95,6 +98,12 @@
       # define the default dev environment
       devenv.shells.default = {
         name = "blink";
+
+        # Set environment to use the locally built .so file during runtime
+        environment = {
+          LD_LIBRARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH";
+          FUZZY_PREBUILT_BINARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so";
+        };
 
         languages.rust = {
           enable = true;
