@@ -58,8 +58,8 @@
           buildInputs = [ blink-fuzzy-lib ];
 
           postInstall = ''
-            mkdir -p ${out}/lib
-            cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so ${out}/lib/
+            mkdir -p ${vimPlugin}/lib
+            cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so ${vimPlugin}/lib/
           '';
 
           vimFiles.plugin = "plugin/blink-cmp.vim";
