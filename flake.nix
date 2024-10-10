@@ -49,20 +49,37 @@
               "frizbee-0.1.0" = "sha256-9L3ZS7GMvLEqOBjC/VW2jHEZge/s6jRN7ok647Frl/M=";
             };
           };
+
+          # This ensures that we are explicitly building the shared object file.
+          cargoBuildOptions = [ "--release" "--lib" "--features" "fuzzy" ];
+
+          installPhase = ''
+            # Copy the built library to the output path
+            mkdir -p $out/lib
+            cp target/release/libblink_cmp_fuzzy.so $out/lib/
+          '';
         };
+
       in {
         blink-cmp = pkgs.vimUtils.buildVimPlugin {
           pname = "blink-cmp";
           inherit src version;
-          # Ensure the Rust library is available during the plugin build
+
           buildInputs = [ blink-fuzzy-lib ];
 
           postInstall = ''
+            # Make sure the library is available in the output
             mkdir -p $out/lib
             cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $out/lib/
           '';
 
           vimFiles.plugin = "plugin/blink-cmp.vim";
+
+          # Make sure the plugin knows where to find the library
+          # This depends on how blink.cmp is configured. Adjust as necessary:
+          preInstall = ''
+            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
+          '';
 
           meta = {
             description = "Performant, batteries-included completion plugin for Neovim";
@@ -87,3 +104,4 @@
     };
   };
 }
+
