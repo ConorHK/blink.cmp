@@ -67,17 +67,18 @@
 
           buildInputs = [ blink-fuzzy-lib ];
 
-          # Prevent the plugin from attempting to download the prebuilt binary
+          # Ensure the plugin uses the locally built library
           postInstall = ''
             mkdir -p $out/lib
             cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $out/lib/
 
-            # Disable pre-built binary download by setting this environment variable
-            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
+            # Export library path for Neovim to use it correctly
+            export LD_LIBRARY_PATH=${blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH
 
-            # Tell the plugin to force using this version of the binary
+            # Set the Vim plugin environment for the fuzzy binary
             echo "set fuzzy.prebuiltBinaries.forceVersion=true" >> $out/plugin/blink-cmp.vim
             echo "let g:fuzzy_prebuilt_binary_path='$out/lib/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
+            echo "let g:fuzzy_library_path='$LD_LIBRARY_PATH'" >> $out/plugin/blink-cmp.vim
           '';
 
           vimFiles.plugin = "plugin/blink-cmp.vim";
@@ -96,6 +97,11 @@
       # define the default dev environment
       devenv.shells.default = {
         name = "blink";
+
+        # Set environment to use the locally built .so file during runtime
+        environment = {
+          LD_LIBRARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH";
+        };
 
         languages.rust = {
           enable = true;
