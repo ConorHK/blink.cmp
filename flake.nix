@@ -68,18 +68,14 @@
 
           # Ensure the plugin uses the locally built library
           postInstall = ''
-            # Copy the built .so file
-            mkdir -p $out/lib
-            cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $out/lib/
+            # Copy the built .so file to Neovim's runtime path
+            localLibDir=$out/lib
+            mkdir -p $localLibDir
+            cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $localLibDir/
 
-            # Configure Neovim to use the local .so file
-            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
-            export LD_LIBRARY_PATH=${blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH
-
-            # Set Vim plugin environment, ensuring it uses the local .so file
-            echo "let g:fuzzy_force_local = 1" >> $out/plugin/blink-cmp.vim
-            echo "let g:fuzzy_prebuilt_binary_path='$out/lib/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
-            echo "let g:fuzzy_library_path='$LD_LIBRARY_PATH'" >> $out/plugin/blink-cmp.vim
+            # Write Neovim configuration to use the local .so file
+            echo "let g:fuzzy_prebuilt_binary_path='$localLibDir/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
+            echo "let g:fuzzy_library_path='$localLibDir'" >> $out/plugin/blink-cmp.vim
           '';
 
           vimFiles.plugin = "plugin/blink-cmp.vim";
