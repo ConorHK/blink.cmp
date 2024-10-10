@@ -72,10 +72,11 @@
             mkdir -p $out/lib
             cp ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so $out/lib/
 
-            # Export library path for Neovim to use it correctly
+            # Set environment for Neovim to use the correct library path
+            export FUZZY_PREBUILT_BINARY_PATH=$out/lib/libblink_cmp_fuzzy.so
             export LD_LIBRARY_PATH=${blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH
 
-            # Set the Vim plugin environment for the fuzzy binary
+            # Set Vim plugin environment
             echo "set fuzzy.prebuiltBinaries.forceVersion=true" >> $out/plugin/blink-cmp.vim
             echo "let g:fuzzy_prebuilt_binary_path='$out/lib/libblink_cmp_fuzzy.so'" >> $out/plugin/blink-cmp.vim
             echo "let g:fuzzy_library_path='$LD_LIBRARY_PATH'" >> $out/plugin/blink-cmp.vim
@@ -101,6 +102,7 @@
         # Set environment to use the locally built .so file during runtime
         environment = {
           LD_LIBRARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib:$LD_LIBRARY_PATH";
+          FUZZY_PREBUILT_BINARY_PATH = "${self'.packages.blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so";
         };
 
         languages.rust = {
@@ -111,3 +113,4 @@
     };
   };
 }
+
