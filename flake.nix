@@ -50,7 +50,7 @@
             };
           };
 
-          cargoBuildOptions = [ "--release" "--lib" "--features" "fuzzy" ];
+          cargoBuildOptions = [ "--release" ];
 
         };
 
@@ -58,11 +58,6 @@
 	blink-cmp = pkgs.vimUtils.buildVimPlugin {
             pname = "blink-cmp";
             inherit src version;
-            preInstall = ''
-              mkdir -p target/release
-              ln -s ${blink-fuzzy-lib}/lib/libblink_cmp_fuzzy.so target/release/libblink_cmp_fuzzy.so
-            '';
-
             meta = {
               description =
                 "Performant, batteries-included completion plugin for Neovim ";
@@ -73,16 +68,6 @@
           };
 
           default = self'.packages.blink-cmp;
-        };
-
-        # define the default dev environment
-        devenv.shells.default = {
-          name = "blink";
-
-          languages.rust = {
-            enable = true;
-            channel = "nightly";
-          };
         };
       };
     };
